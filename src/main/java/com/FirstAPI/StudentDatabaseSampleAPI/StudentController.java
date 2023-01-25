@@ -1,5 +1,8 @@
 package com.FirstAPI.StudentDatabaseSampleAPI;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -7,33 +10,42 @@ import java.util.Map;
 
 @RestController
 public class StudentController {
-    Map<Integer, Student> map = new HashMap<>();
+
+    @Autowired
+    StudentService studentService;
 
     @PostMapping("/add_student")
-    public String addStudent(@RequestBody Student student){
-        int rollNo = student.getRollNo();
-        map.put(rollNo,student);
-        return "Student details are added successfully";
+    public ResponseEntity addStudent(@RequestBody Student student){
+        String response = studentService.addStudent(student);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/get_student")
-    public Student getStudent(@RequestParam("q") int rollNo) {
-
-        return map.get(rollNo);
+    public ResponseEntity getStudent(@RequestParam("q") int rollNo) {
+        Student student = studentService.getStudent(rollNo);
+        if(student == null){
+            return new ResponseEntity<>("Not Found",HttpStatus.NOT_FOUND);
+        }
+        else{
+            return new ResponseEntity<>(student, HttpStatus.FOUND);
+        }
     }
 
     @PutMapping("/update_student/{rollNo}")
-    public String updateStudent(@PathVariable int rollNo, @RequestBody Student student) {
-        student.setAge(student.getAge());
-        student.setName(student.getName());
-        student.setState(student.getState());
-        map.put(rollNo,student);
-        return "Update is Successfull";
+    public ResponseEntity updateStudent(@PathVariable("rollNo") int rollNo, @RequestBody Student student) {
+        String response = studentService.updateStudent(rollNo, student);
+        if(response.equals("Not Found")){
+            return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
 
     @DeleteMapping("/delete_student/{rollNo}")
-    public String deletestudent(@PathVariable int rollNo) {
-        map.remove(rollNo);
-        return "Student details are deleted";
+    public ResponseEntity deletestudent(@PathVariable("rollNo") int rollNo) {
+        String response = studentService.deletestudent(rollNo);
+        if(response.equals("Invalid Roll No")){
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(response, HttpStatus.FOUND);
     }
 }
